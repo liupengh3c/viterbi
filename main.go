@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"encoding/json"
 	"fmt"
 	"io"
 	"math"
@@ -25,6 +24,7 @@ type Node struct {
 // "ni":{"你"：0.91，"尼"：0.789,...},
 // "wo":{"我"：0.91，"窝"：0.189,...},
 //}
+// EmissionMap 读取整理好的汉字拼音数据，获取的map数据
 var EmissionMap = make(map[string]map[string]float64)
 
 // WordsArray 读取大量词语数据获取的词语数组
@@ -105,8 +105,8 @@ func ReadPinyinData() {
 		// 取这个拼音的首字母存一份
 		EmissionMap[py][word] = em
 	}
-	js, _ := json.MarshalIndent(EmissionMap, "", "\t")
-	fmt.Println(string(js))
+	// js, _ := json.MarshalIndent(EmissionMap, "", "\t")
+	// fmt.Println(string(js))
 }
 func readWords() {
 	f, err := os.Open("RenMinData.txt")
@@ -175,11 +175,13 @@ func GetInputSequence(pys []string) {
 			continue
 		}
 		mymap := make(map[string]*Node)
+		// EmissionMap 一维Key为拼音，二维key为汉字
 		for w, r := range EmissionMap[v] {
 			mymap[w] = &Node{Word: w, Emission: r, Py: v}
 		}
 		InputSequence = append(InputSequence, mymap)
 	}
+	fmt.Printf("%q\n", InputSequence)
 	InputSequence = InputSequence[1:]
 }
 func getKey(t int, k string) string {
@@ -203,6 +205,7 @@ func viterbi(t int, k string) float64 {
 	n := t - 1
 
 	for i, v := range InputSequence[n] {
+		fmt.Printf("k=%v,i=%v\n", k, v)
 		stateTransfer := gettransprop(k, i)
 		emissionProp := EmissionMap[Pinyins[n]][i]
 		if len(Pinyins)-1 == t {
@@ -223,13 +226,12 @@ func viterbi(t int, k string) float64 {
 // Translate 整合输入的拼音
 func Translate(pys []string) {
 	GetInputSequence(pys)
-
 	// 使用viterbi算法求解最大路径
 	var maxNode *Node
 	maxScore := 0.0
-	for k, node := range InputSequence[len(InputSequence)-1] {
+	for word, node := range InputSequence[len(InputSequence)-1] {
 		fmt.Println("**************************")
-		score := viterbi(len(pys)-1, k)
+		score := viterbi(len(pys)-1, word)
 		if score > maxScore {
 			maxScore = score
 			maxNode = node
