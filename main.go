@@ -188,6 +188,7 @@ func getKey(t int, k string) string {
 	return strings.Join([]string{strconv.Itoa(t), k}, "_")
 }
 
+// viterbi t:输入拼音slice的长度-1，k：汉字
 func viterbi(t int, k string) float64 {
 	fmt.Printf("t:%v,k:%v\n", t, k)
 	if viterbiCache[getKey(t, k)] != 0 {
